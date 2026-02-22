@@ -17,13 +17,13 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 139.59.87.169 >> ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa_deploy
+          chmod 600 ~/.ssh/id_rsa_deploy  
+          ssh-keyscan -H 139.59.87.169 >> ~/.ssh/known_hosts_deploy
 
       - name: Deploy to server
         run: |
-          ssh root@139.59.87.169 << 'EOF'
+          ssh -i ~/.ssh/id_rsa_deploy root@139.59.87.169 << 'EOF'
             cd /root/BMS
             pnpm install
             pnpm run build
