@@ -7,7 +7,7 @@ on:
 
 jobs:
   redeploy_everything:
-    name: Deploy everything to production Cluster
+    name: Deploy everything to staging server
     runs-on: ubuntu-latest
 
     steps:
@@ -18,13 +18,16 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa_deploy
-          chmod 600 ~/.ssh/id_rsa_deploy  
-          ssh-keyscan -H 139.59.87.169 >> ~/.ssh/known_hosts_deploy
+          chmod 600 ~/.ssh/id_rsa_deploy
+          ssh-keyscan -H 139.59.87.169 >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
           ssh -i ~/.ssh/id_rsa_deploy root@139.59.87.169 << 'EOF'
+            export PATH=$PATH:/root/.local/share/pnpm:/root/.nvm/versions/node/$(node -v)/bin
             cd /root/BMS
+            git pull origin main
             pnpm install
             pnpm run build
             pm2 restart http-server
