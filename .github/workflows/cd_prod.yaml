@@ -1,0 +1,33 @@
+name: Deploy to production
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  deploy_production:
+    name: Deploy to production server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa_deploy
+          chmod 600 ~/.ssh/id_rsa_deploy
+          ssh-keyscan -H 143.110.241.235 >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/id_rsa_deploy root@143.110.241.235 << 'EOF'
+            cd /root/BMS
+            git pull origin main
+            pnpm install
+            cd packages/prisma && npx prisma migrate deploy && cd /root/BMS
+            pnpm run build
+            pm2 restart http-server
+            pm2 restart ws-server
+            pm2 restart web
+          EOF
