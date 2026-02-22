@@ -3,17 +3,14 @@ name: Deploy to staging
 on:
   push:
     branches:
-      - "main"
+      - "dev"
 
 jobs:
-  redeploy_everything:
-    name: Deploy everything to staging server
+  deploy_staging:
+    name: Deploy to staging server
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -24,19 +21,12 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -i ~/.ssh/id_rsa_deploy root@139.59.87.169 << 'EOF'
-            export PATH=$PATH:/root/.local/share/pnpm:/root/.nvm/versions/node/$(node -v)/bin
+          ssh -i ~/.ssh/id_rsa_deploy root@209.38.121.211 << 'EOF'
             cd /root/BMS
-            git pull origin main
-
-            # Write .env files (DATABASE_URL is gitignored)
-            echo '${{ secrets.DATABASE_URL }}' > packages/prisma/.env
-            cp packages/prisma/.env apps/web/.env
-
+            git pull origin dev
             pnpm install
             cd packages/prisma && npx prisma migrate deploy && cd /root/BMS
             pnpm run build
-
             pm2 restart http-server
             pm2 restart ws-server
             pm2 restart web
