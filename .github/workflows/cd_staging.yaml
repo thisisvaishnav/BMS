@@ -3,7 +3,7 @@ name: Deploy to staging
 on:
   push:
     branches:
-      - "dev"
+      - "main"
 
 jobs:
   deploy_staging:
@@ -23,7 +23,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa_deploy root@209.38.121.211 << 'EOF'
             cd /root/BMS
-            git pull origin dev
+            git pull origin main
             pnpm install
             cd packages/prisma && npx prisma migrate deploy && cd /root/BMS
             pnpm run build
