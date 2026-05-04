@@ -3,15 +3,15 @@ name: Deploy to Production Server
 on:
   push:
     branches:
-      - main          # triggers when you push to main
-  workflow_dispatch:  # allows manual trigger from Actions tab
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1 - Checkout your code
+      # Step 1 - Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -19,26 +19,38 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEYY }}" > ~/.ssh/id_rsa_deploy
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa_deploy
           chmod 600 ~/.ssh/id_rsa_deploy
-          ssh-keyscan -H 159.223.181.214 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 134.209.72.249 >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       # Step 3 - Deploy to server
       - name: Deploy to server
         run: |
           ssh -i ~/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no root@134.209.72.249 << 'EOF'
-            # Go to your project folder (change this path if needed)
-            cd /root/myapp || git clone https://github.com/${{ github.repository }} /root/myapp && cd /root/myapp
+            # Create folder if it doesn't exist and clone repo
+            if [ ! -d "/home/myapp" ]; then
+              git clone https://github.com/${{ github.repository }} /home/myapp
+            fi
 
-            # Pull latest code
+            # Go to project folder
+            cd /home/myapp
+
+            # Pull latest code from main
             git pull origin main
 
             # ---- ADD YOUR COMMANDS BELOW ----
-            # Node.js example:
+            # Node.js:
             # npm install
             # pm2 restart app
 
-            # Python example:
+            # Python:
             # pip install -r requirements.txt
             # systemctl restart myapp
+
+            echo "✅ Deploy done!"
+          EOF
+
+      # Step 4 - Confirm success
+      - name: Notify success
+        run: echo "🚀 Successfully deployed to /home/myapp on 134.209.72.249"
