@@ -1,30 +1,44 @@
-name: Daily Auto Push
+name: Deploy to Production Server
 
 on:
-  schedule:
-    - cron: '0 9 * * *'  # Every day at 9 AM UTC
-  workflow_dispatch:       # Allow manual trigger
+  push:
+    branches:
+      - main          # triggers when you push to main
+  workflow_dispatch:  # allows manual trigger from Actions tab
 
 jobs:
-  auto-commit:
+  deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout repo
+      # Step 1 - Checkout your code
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Make a change (customize this)
+      # Step 2 - Setup SSH
+      - name: Setup SSH
         run: |
-          echo "Last updated: $(date)" >> log.txt
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEYY }}" > ~/.ssh/id_rsa_deploy
+          chmod 600 ~/.ssh/id_rsa_deploy
+          ssh-keyscan -H 159.223.181.214 >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      - name: Commit and push
+      # Step 3 - Deploy to server
+      - name: Deploy to server
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --staged --quiet || git commit -m "chore: daily auto-update $(date +'%Y-%m-%d')"
-          git push
+          ssh -i ~/.ssh/id_rsa_deploy -o StrictHostKeyChecking=no root@134.209.72.249 << 'EOF'
+            # Go to your project folder (change this path if needed)
+            cd /root/myapp || git clone https://github.com/${{ github.repository }} /root/myapp && cd /root/myapp
+
+            # Pull latest code
+            git pull origin main
+
+            # ---- ADD YOUR COMMANDS BELOW ----
+            # Node.js example:
+            # npm install
+            # pm2 restart app
+
+            # Python example:
+            # pip install -r requirements.txt
+            # systemctl restart myapp
