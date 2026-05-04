@@ -1,0 +1,30 @@
+name: Daily Auto Push
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Every day at 9 AM UTC
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make a change (customize this)
+        run: |
+          echo "Last updated: $(date)" >> log.txt
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "chore: daily auto-update $(date +'%Y-%m-%d')"
+          git push
