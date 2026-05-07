@@ -43,17 +43,19 @@ packages/
 pnpm install
 ```
 
-2. Set the database URL:
+2. Set the database URL (recommended in a local `.env` file):
 
 ```bash
 export DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>"
 ```
 
-3. Run database migrations:
+If your username or password contains special characters, URL-encode them.
+
+3. Run database migrations for local development:
 
 ```bash
 cd packages/prisma
-npx prisma migrate deploy
+npx prisma migrate dev
 cd ../..
 ```
 
